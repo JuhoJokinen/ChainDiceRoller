@@ -5,6 +5,12 @@ counter = 1
 
 def main(page: ft.Page):
 
+    
+
+    def checkbox_changed(e):
+        page.window.always_on_top = onTop.value
+        page.update()
+
     def diceRoll(e):
 
         if len(diceToRoll.value) > 0:
@@ -30,6 +36,7 @@ def main(page: ft.Page):
         global counter
         isA = True
         seqChain = False
+        nearChain = False
 
         i = 0
         j = 0
@@ -96,7 +103,7 @@ def main(page: ft.Page):
                 resultString += "Chain! "
                 resultList = []
             #Sequential
-            elif len(resultList) > 1 and ( chainType.value == "Sequential" or chainType.value == "Near" ): 
+            elif len(resultList) > 1 and ( chainType.value == "Sequential" ): 
                 sortedResultList = resultList.copy()
                 sortedResultList.sort()
                 while k + 1 < len(sortedResultList):
@@ -109,6 +116,25 @@ def main(page: ft.Page):
                         break
                 k = 0
                 if seqChain:
+                    resultString += "Chain! "
+                    resultList = []
+                else:
+                    place += 1
+                    resultList = []
+            #Near
+            elif len(resultList) > 1 and chainType.value == "Near":
+                sortedResultList = resultList.copy()
+                sortedResultList.sort()
+                while k + 1 < len(sortedResultList):
+                    if sortedResultList[k] + 1 == sortedResultList[k + 1] or sortedResultList[k] == sortedResultList[k + 1]:
+                        nearChain = True
+                        k += 1
+                    else:
+                        nearChain = False
+                        k += 1
+                        break
+                k = 0
+                if nearChain:
                     resultString += "Chain! "
                     resultList = []
                 else:
@@ -131,6 +157,7 @@ def main(page: ft.Page):
         return True
 
     diceToRoll = ft.TextField(hint_text = "Dice to roll")
+    onTop = ft.Checkbox(label="Window always on top", on_change=checkbox_changed)
 
     chainType = ft.Dropdown(
                 editable = True,
@@ -152,6 +179,7 @@ def main(page: ft.Page):
         controls = [
             diceToRoll,
             chainType,
+            onTop,
             ft.Container(
                 expand = True,
                 alignment = ft.alignment.bottom_center,
