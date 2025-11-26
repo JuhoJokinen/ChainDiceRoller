@@ -303,7 +303,7 @@ class ChainDiceRoller(ft.Container):
         self.resultCL.update()    
 
         return True
-
+    """"
     def opendiceMenu(self, e):
         global menuOpen
 
@@ -319,7 +319,7 @@ class ChainDiceRoller(ft.Container):
             self.diceButtons.visible = False
 
         self.update()
-        
+     """   
 
 
 
@@ -328,14 +328,12 @@ def main(page: ft.Page):
 
     def toggleOnTop(e):
         page.window.always_on_top = not page.window.always_on_top
-        onTop.checked = not onTop.checked
         page.update()
 
     def toggleDiceMenu(e):
         roller.diceButtons.visible = not roller.diceButtons.visible
-        diceMenu.checked = not diceMenu.checked
 
-        if diceMenu.checked:
+        if diceMenu.value:
             page.window.width += 400
         else:
             page.window.width -= 400
@@ -346,23 +344,20 @@ def main(page: ft.Page):
     page.window.width = 800
     page.window.min_height = 300
     page.window.min_width = 500
-
-    onTop = ft.PopupMenuItem(
-        text = "Always On Top", on_click = toggleOnTop
-    )
     
-    diceMenu = ft.PopupMenuItem(
-        text = "Dice Menu", on_click = toggleDiceMenu
+    diceMenu = ft.Checkbox(
+        label = "Dice Menu", on_change = toggleDiceMenu
+    )
+
+    onTop = ft.Checkbox(
+        label = "Always on top", on_change = toggleOnTop
     )
 
     page.appbar = ft.AppBar(
+        toolbar_height = 40,
         actions = [
-            ft.PopupMenuButton(
-                items = [
-                    onTop,
-                    diceMenu
-                ]
-            )
+            diceMenu,
+            onTop
         ]
     )
 
