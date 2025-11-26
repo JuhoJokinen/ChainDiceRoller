@@ -26,7 +26,7 @@ class ChainDiceRoller(ft.Container):
 
         self.expand = True
  
-        self.diceToRoll = ft.TextField(hint_text = "Dice to roll")
+        self.diceToRoll = ft.TextField(hint_text = "Dice to roll", on_submit = self.button_clicked)
         #self.diceMenu = ft.ElevatedButton(text="Dice Menu", on_click = self.opendiceMenu)
 
         self.chainType = ft.Dropdown(
@@ -190,9 +190,12 @@ class ChainDiceRoller(ft.Container):
         total = 0
         chain = 0
 
-        if len(e.control.data) > 0:
-            dString = e.control.data
-        else:    
+        try:
+            if len(e.control.data) > 0:
+                dString = e.control.data
+            else:    
+                dString = self.diceToRoll.value
+        except:
             dString = self.diceToRoll.value
 
         print(dString)
@@ -354,7 +357,7 @@ def main(page: ft.Page):
     )
 
     page.appbar = ft.AppBar(
-        toolbar_height = 40,
+        toolbar_height = 30,
         actions = [
             diceMenu,
             onTop
