@@ -1,7 +1,8 @@
-import flet as ft
+import flet as ft # type: ignore
 import random
 
 counter = 1
+counter2 = 1
 menuOpen = False
 
 class DiceButton(ft.ElevatedButton):
@@ -16,9 +17,37 @@ class RollButton(ft.FilledButton):
         super().__init__()
         self.text = text
         self.on_click = button_clicked
-        self.width = 100
-        self.height = 80
+        self.width = 60
+        self.height = 40
         self.data = ""
+
+class Macro(ft.Row):
+    def __init__(self, macro_dice, deleteMacro, button_clicked):
+        super().__init__()
+        self.macro_dice = macro_dice
+        self.deleteMacro = deleteMacro
+        self.on_click = button_clicked
+        self.macro_name = "name"
+
+        self.controls = [
+            ft.TextField(hint_text = "name", width = 150),
+            DiceButton(text = self.macro_dice, button_clicked = button_clicked),
+            ft.Container (
+                expand = True,
+                alignment = ft.alignment.top_right,
+                content = (
+                    ft.IconButton(
+                        ft.Icons.DELETE_OUTLINE,
+                        tooltip = "Delete macro",
+                        on_click = self.deleteClick,
+                    )
+                )
+            )
+        ]
+
+    def deleteClick(self, e):
+        self.deleteMacro(self)
+
 
 class ChainDiceRoller(ft.Container):
     def __init__(self):
@@ -26,8 +55,7 @@ class ChainDiceRoller(ft.Container):
 
         self.expand = True
  
-        self.diceToRoll = ft.TextField(hint_text = "Dice to roll", on_submit = self.button_clicked)
-        #self.diceMenu = ft.ElevatedButton(text="Dice Menu", on_click = self.opendiceMenu)
+        self.diceToRoll = ft.TextField(hint_text = "Dice to roll", width = 200, on_submit = self.button_clicked)
 
         self.chainType = ft.Dropdown(
                 editable = True,
@@ -39,9 +67,15 @@ class ChainDiceRoller(ft.Container):
                     ft.dropdown.Option("Near")
                 ],
                 value = "Match",
-                #on_change = self.update()
                 )
-    
+        
+        self.macros = ft.Column(
+            expand = True,
+            scroll = ft.ScrollMode.ADAPTIVE,
+            controls = [
+            ]            
+        )
+
         self.diceButtons = ft.Column(
             visible = False,
             expand = True,
@@ -110,23 +144,34 @@ class ChainDiceRoller(ft.Container):
                             DiceButton(text = "5d20", button_clicked = self.button_clicked),
                             DiceButton(text = "6d20", button_clicked = self.button_clicked),
                         ]
-                    ),
-                
+                    ),ft.Row(
+                        alignment = ft.alignment.top_left,
+                        controls = [
+                            DiceButton(text = "1d2", button_clicked = self.button_clicked),
+                            DiceButton(text = "1d3", button_clicked = self.button_clicked),
+                            DiceButton(text = "1d100", button_clicked = self.button_clicked)
+                        ]
+                    )
                 ]
         )
     
         self.choiceCL = ft.Column(
             expand = True,
             alignment = ft.alignment.top_left,
-            controls = [
-                self.diceToRoll,
-                self.chainType,
-                ft.Container(
-                    expand = True,
-                    alignment = ft.alignment.bottom_center,
-                    content = RollButton(text = "Roll!",
-                                        button_clicked = self.button_clicked)                
-                )                    
+            controls = [  
+                ft.Row(
+                    controls = [
+                        self.diceToRoll,
+                        RollButton(text = "Roll!", button_clicked = self.button_clicked), 
+                    ]
+                ), 
+                ft.Row(
+                    controls = [
+                        self.chainType,
+                        ft.ElevatedButton(text = "Add Macro", on_click = self.addMacro) 
+                    ]
+                ),
+                self.macros            
             ]
         )
 
@@ -136,7 +181,6 @@ class ChainDiceRoller(ft.Container):
             auto_scroll = True,
             alignment = ft.alignment.top_left,
             controls = [
-            
             ]
         
         )
@@ -299,31 +343,26 @@ class ChainDiceRoller(ft.Container):
             j = 0
 
         counter += 1
+
         self.resultCL.controls.append(ft.Text(rollInfo))
         self.resultCL.controls.append(ft.Text(resultString))
         self.resultCL.controls.append(ft.Text("For a total of: " + str(total)))
-        self.resultCL.controls.append(ft.Divider(color="grey"))
+        self.resultCL.controls.append(ft.Divider(color = "grey"))
         self.resultCL.update()    
 
         return True
-    """"
-    def opendiceMenu(self, e):
-        global menuOpen
+    
+    def addMacro(self, e):
 
-        if menuOpen == False:
-            #self.mainPage.window.width += 400
-            menuOpen = True
-            self.dmCL.expand = True
-            self.diceButtons.visible = True
-        elif menuOpen == True:
-            #self.mainPage.window.width -= 400
-            menuOpen = False
-            self.dmCL.expand = False
-            self.diceButtons.visible = False
+        macro = Macro(self.diceToRoll.value, self.deleteMacro, self.button_clicked)
 
-        self.update()
-     """   
+        self.macros.controls.append(macro)
+        
+        self.macros.update()
 
+    def deleteMacro(self, macro):
+        self.macros.controls.remove(macro)
+        self.macros.update()
 
 
 def main(page: ft.Page):
@@ -345,8 +384,8 @@ def main(page: ft.Page):
     
     page.window.height = 500
     page.window.width = 800
-    page.window.min_height = 300
-    page.window.min_width = 500
+    page.window.min_height = 400
+    page.window.min_width = 600
     
     diceMenu = ft.Checkbox(
         label = "Dice Menu", on_change = toggleDiceMenu
@@ -358,10 +397,13 @@ def main(page: ft.Page):
 
     page.appbar = ft.AppBar(
         toolbar_height = 30,
-        actions = [
-            diceMenu,
-            onTop
-        ]
+        leading_width = 250,
+        leading = ft.Row(
+            controls = [
+                diceMenu,
+                onTop
+            ]
+        )
     )
 
     roller = ChainDiceRoller()
