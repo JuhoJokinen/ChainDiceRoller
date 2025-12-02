@@ -2,8 +2,6 @@ import flet as ft # type: ignore
 import random
 
 counter = 1
-counter2 = 1
-menuOpen = False
 
 class DiceButton(ft.ElevatedButton):
     def __init__(self, text, button_clicked):
@@ -22,15 +20,18 @@ class RollButton(ft.FilledButton):
         self.data = ""
 
 class Macro(ft.Row):
-    def __init__(self, macro_dice, deleteMacro, button_clicked):
+    def __init__(self,macro_name, macro_dice, deleteMacro, button_clicked, editMacro):
         super().__init__()
         self.macro_dice = macro_dice
         self.deleteMacro = deleteMacro
         self.on_click = button_clicked
-        self.macro_name = "name"
+        self.macro_name = macro_name
+        self.editMacros = editMacro
+
+        self.nameField = ft.TextField(hint_text = "name", value = macro_name, width = 150, on_blur = self.renameMacro)
 
         self.controls = [
-            ft.TextField(hint_text = "name", width = 150),
+            self.nameField,
             DiceButton(text = self.macro_dice, button_clicked = button_clicked),
             ft.Container (
                 expand = True,
@@ -47,6 +48,12 @@ class Macro(ft.Row):
 
     def deleteClick(self, e):
         self.deleteMacro(self)
+    
+    def renameMacro(self, e):
+        self.macro_name = self.nameField.value
+        self.editMacros()
+
+    
 
 
 class ChainDiceRoller(ft.Container):
@@ -354,16 +361,46 @@ class ChainDiceRoller(ft.Container):
     
     def addMacro(self, e):
 
-        macro = Macro(self.diceToRoll.value, self.deleteMacro, self.button_clicked)
+        macro = Macro("", self.diceToRoll.value, self.deleteMacro, self.button_clicked, self.editMacros)
 
         self.macros.controls.append(macro)
+
+        with open("saved_macros", "a") as file:
+            file.write("," + self.diceToRoll.value + "\n")
         
         self.macros.update()
 
     def deleteMacro(self, macro):
         self.macros.controls.remove(macro)
+
+        i = 0
+
+        with open("saved_macros", "w") as file:
+            while i < len(self.macros.controls):
+                file.write(self.macros.controls[i].macro_name + "," + self.macros.controls[i].macro_dice + "\n")
+                i += 1
+
         self.macros.update()
 
+    def editMacros(self):
+        i = 0
+
+        with open("saved_macros", "w") as file:
+            while i < len(self.macros.controls):
+                file.write(self.macros.controls[i].macro_name + "," + self.macros.controls[i].macro_dice + "\n")
+                i += 1
+
+    def readMacros(self):
+        namedice = []
+
+        with open("saved_macros") as file:
+            l = file.readlines()
+            for line in l:
+                namedice = line.strip().split(",")
+
+                macro = Macro(namedice[0], namedice[1], self.deleteMacro, self.button_clicked, self.editMacros)
+
+                self.macros.controls.append(macro)
 
 def main(page: ft.Page):
     page.title = "ChainDiceRoller"
@@ -404,9 +441,11 @@ def main(page: ft.Page):
                 onTop
             ]
         )
-    )
+    )   
 
     roller = ChainDiceRoller()
+
+    roller.readMacros()
 
     page.add(roller)
 
