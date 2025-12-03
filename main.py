@@ -53,8 +53,6 @@ class Macro(ft.Row):
         self.macro_name = self.nameField.value
         self.editMacros()
 
-    
-
 
 class ChainDiceRoller(ft.Container):
     def __init__(self):
@@ -75,6 +73,10 @@ class ChainDiceRoller(ft.Container):
                 ],
                 value = "Match",
                 )
+        
+        self.luckyCheck = ft.Checkbox(label = "Lucky", value = False, on_change = self.luckySwitch)
+
+        self.unluckyCheck = ft.Checkbox(label = "Unlucky", value = False, on_change = self.unluckySwitch)
         
         self.macros = ft.Column(
             expand = True,
@@ -169,13 +171,16 @@ class ChainDiceRoller(ft.Container):
                 ft.Row(
                     controls = [
                         self.diceToRoll,
-                        RollButton(text = "Roll!", button_clicked = self.button_clicked), 
+                        RollButton(text = "Roll!", button_clicked = self.button_clicked),
+                        ft.ElevatedButton(text = "Add Macro", on_click = self.addMacro) 
                     ]
                 ), 
                 ft.Row(
                     controls = [
                         self.chainType,
-                        ft.ElevatedButton(text = "Add Macro", on_click = self.addMacro) 
+                        self.luckyCheck,
+                        self.unluckyCheck,
+                         
                     ]
                 ),
                 self.macros            
@@ -240,6 +245,7 @@ class ChainDiceRoller(ft.Container):
         place = 0
         total = 0
         chain = 0
+        totalRolls = 1
 
         try:
             if len(e.control.data) > 0:
@@ -282,83 +288,123 @@ class ChainDiceRoller(ft.Container):
         print(self.chainType.value)
 
         rollInfo = str(counter) + ". Rolling"
+
+        if self.luckyCheck.value:
+            rollInfo += " lucky"
+            totalRolls = 2
+        elif self.unluckyCheck.value:
+            rollInfo += " unlucky"
+            totalRolls = 2
+        
         while place < len(amountList):
             rollInfo = rollInfo + " " + str(amountList[place]) + "d" + str(diceList[place])
             place += 1
 
+        self.resultCL.controls.append(ft.Text(rollInfo))        
 
-        place = 0
+        while totalRolls > 0:
 
-        while place < len(amountList):
-            while j < amountList[place]:
-                result = random.randint(1, diceList[place])
-                resultString += str(result) + " "
-                resultList.append(result)
-                total += result
-                chain += result
-                j += 1
+            place = 0
 
-            resultString += "(" + str(chain) + ") "
+            while place < len(amountList):
+                while j < amountList[place]:
+                    result = random.randint(1, diceList[place])
+                    resultString += str(result) + " "
+                    resultList.append(result)
+                    total += result
+                    chain += result
+                    j += 1
 
-            #Match
-            if all(v == resultList[0] for v in resultList) and len(resultList) > 1 and ( self.chainType.value == "Match" or self.chainType.value == "Near" ):
-                resultString += "Chain! "
-                resultList = []
-            #Sequential
-            elif len(resultList) > 1 and ( self.chainType.value == "Sequential" ): 
-                sortedResultList = resultList.copy()
-                sortedResultList.sort()
-                while k + 1 < len(sortedResultList):
-                    if sortedResultList[k] + 1 == sortedResultList[k + 1]:
-                        seqChain = True
-                        k += 1
-                    else:
-                        seqChain = False
-                        k += 1
-                        break
-                k = 0
-                if seqChain:
+                resultString += "(" + str(chain) + ") "
+
+                #Match
+                if all(v == resultList[0] for v in resultList) and len(resultList) > 1 and ( self.chainType.value == "Match" or self.chainType.value == "Near" ):
                     resultString += "Chain! "
                     resultList = []
-                else:
-                    place += 1
-                    resultList = []
-            #Near
-            elif len(resultList) > 1 and self.chainType.value == "Near":
-                sortedResultList = resultList.copy()
-                sortedResultList.sort()
-                while k + 1 < len(sortedResultList):
-                    if sortedResultList[k] + 1 == sortedResultList[k + 1] or sortedResultList[k] == sortedResultList[k + 1]:
-                        nearChain = True
-                        k += 1
+                #Sequential
+                elif len(resultList) > 1 and ( self.chainType.value == "Sequential" ): 
+                    sortedResultList = resultList.copy()
+                    sortedResultList.sort()
+                    while k + 1 < len(sortedResultList):
+                        if sortedResultList[k] + 1 == sortedResultList[k + 1]:
+                            seqChain = True
+                            k += 1
+                        else:
+                            seqChain = False
+                            k += 1
+                            break
+                    k = 0
+                    if seqChain:
+                        resultString += "Chain! "
+                        resultList = []
                     else:
-                        nearChain = False
-                        k += 1
-                        break
-                k = 0
-                if nearChain:
-                    resultString += "Chain! "
-                    resultList = []
-                else:
+                        place += 1
+                        resultList = []
+                #Near
+                elif len(resultList) > 1 and self.chainType.value == "Near":
+                    sortedResultList = resultList.copy()
+                    sortedResultList.sort()
+                    while k + 1 < len(sortedResultList):
+                        if sortedResultList[k] + 1 == sortedResultList[k + 1] or sortedResultList[k] == sortedResultList[k + 1]:
+                            nearChain = True
+                            k += 1
+                        else:
+                            nearChain = False
+                            k += 1
+                            break
+                    k = 0
+                    if nearChain:
+                        resultString += "Chain! "
+                        resultList = []
+                    else:
+                        place += 1
+                        resultList = []
+                else: 
                     place += 1
                     resultList = []
-            else: 
-                place += 1
-                resultList = []
 
-            chain = 0
-            j = 0
+                chain = 0
+                j = 0
 
-        counter += 1
+            self.resultCL.controls.append(ft.Text(resultString))
+            self.resultCL.controls.append(ft.Text("For a total of: " + str(total)))
 
-        self.resultCL.controls.append(ft.Text(rollInfo))
-        self.resultCL.controls.append(ft.Text(resultString))
-        self.resultCL.controls.append(ft.Text("For a total of: " + str(total)))
+            totalRolls -= 1
+            if totalRolls == 1:
+                firstTotal = total
+            if totalRolls == 0:
+                secondTotal = total
+            resultString = ""
+            total = 0
+
+        if self.luckyCheck.value:
+            self.resultCL.controls.append(ft.Text("better roll is " + str(max(firstTotal, secondTotal))))
+        elif self.unluckyCheck.value:
+            self.resultCL.controls.append(ft.Text("worse roll is " + str(min(firstTotal, secondTotal))))
+
+
         self.resultCL.controls.append(ft.Divider(color = "grey"))
         self.resultCL.update()    
 
-        return True
+        counter += 1
+
+        return total
     
+    def luckySwitch(self, e):
+
+        if self.luckyCheck.value:
+            self.unluckyCheck.value = False
+
+        self.update()
+
+    def unluckySwitch(self, e):
+
+        if self.unluckyCheck.value:
+            self.luckyCheck.value = False
+
+        self.update()
+
+
     def addMacro(self, e):
 
         macro = Macro("", self.diceToRoll.value, self.deleteMacro, self.button_clicked, self.editMacros)
