@@ -172,15 +172,14 @@ class ChainDiceRoller(ft.Container):
                     controls = [
                         self.diceToRoll,
                         RollButton(text = "Roll!", button_clicked = self.button_clicked),
-                        ft.ElevatedButton(text = "Add Macro", on_click = self.addMacro) 
+                        ft.ElevatedButton(text = "Add as macro", on_click = self.addMacro) 
                     ]
                 ), 
                 ft.Row(
                     controls = [
                         self.chainType,
                         self.luckyCheck,
-                        self.unluckyCheck,
-                         
+                        self.unluckyCheck,                       
                     ]
                 ),
                 self.macros            
