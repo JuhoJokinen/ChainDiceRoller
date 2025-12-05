@@ -490,8 +490,11 @@ def main(page: ft.Page):
 
     roller = ChainDiceRoller()
 
-    roller.readMacros()
-
+    try:
+        roller.readMacros()
+    except:
+        print("no saved macros")
+        
     page.add(roller)
 
     page.update()
