@@ -1,5 +1,7 @@
 import flet as ft # type: ignore
 import random
+import socket
+import os
 
 counter = 1
 
@@ -59,6 +61,10 @@ class ChainDiceRoller(ft.Container):
         super().__init__()
 
         self.expand = True
+
+        self.app_data_path = os.getenv("FLET_APP_STORAGE_DATA")
+        self.macroPath = os.path.join(self.app_data_path, "saved_macros")
+
  
         self.diceToRoll = ft.TextField(hint_text = "Dice to roll", width = 200, on_submit = self.button_clicked)
 
@@ -410,7 +416,7 @@ class ChainDiceRoller(ft.Container):
 
         self.macros.controls.append(macro)
 
-        with open("saved_macros", "a") as file:
+        with open(self.macroPath, "a") as file:
             file.write("," + self.diceToRoll.value + "\n")
         
         self.macros.update()
@@ -420,7 +426,7 @@ class ChainDiceRoller(ft.Container):
 
         i = 0
 
-        with open("saved_macros", "w") as file:
+        with open(self.macroPath, "w") as file:
             while i < len(self.macros.controls):
                 file.write(self.macros.controls[i].macro_name + "," + self.macros.controls[i].macro_dice + "\n")
                 i += 1
@@ -430,7 +436,7 @@ class ChainDiceRoller(ft.Container):
     def editMacros(self):
         i = 0
 
-        with open("saved_macros", "w") as file:
+        with open(self.macroPath, "w") as file:
             while i < len(self.macros.controls):
                 file.write(self.macros.controls[i].macro_name + "," + self.macros.controls[i].macro_dice + "\n")
                 i += 1
@@ -438,7 +444,7 @@ class ChainDiceRoller(ft.Container):
     def readMacros(self):
         namedice = []
 
-        with open("saved_macros") as file:
+        with open(self.macroPath) as file:
             l = file.readlines()
             for line in l:
                 namedice = line.strip().split(",")
@@ -488,6 +494,17 @@ def main(page: ft.Page):
         )
     )   
 
+    try:
+        s = socket.socket()
+
+        port = 12345
+
+        s.connect(("127.0.0.1", port))
+
+        print(s.recv(1024).decode)
+    except:
+        print("server not online")
+        
     roller = ChainDiceRoller()
 
     try:
